@@ -1,0 +1,1058 @@
+Projets – Framework Java
+
+Choisir deux projets parmi les cinq proposés.
+
+Exigences techniques communes aux 5 projets
+
+1. Architecture obligatoire
+
+Chaque projet doit respecter une architecture de type :
+
+com.example.project
+
+│
+
+├── config
+
+├── controller
+
+│ ├── rest
+
+│ └── web
+
+│
+
+├── dto
+
+│ ├── request
+
+│ └── response
+
+│
+
+├── entity
+
+├── repository
+
+├── service
+
+│ └── impl
+
+│
+
+├── exception
+
+├── mapper
+
+├── security
+
+└── util
+
+Les deux contrôleurs doivent donc réutiliser exactement la même couche métier.
+
+2. Deux modes d'accès obligatoires
+
+A. API REST
+
+Développer une API permettant à un client externe de manipuler le système qui devra :
+
+    • utiliser HTTP correctement ;
+    • utiliser les codes HTTP appropriés ;
+    • accepter/refuser les données avec validation ;
+    • retourner des DTO ;
+    • gérer les erreurs ;
+
+Par exemple : POST /api/orders devra retourner par exemple :
+
+    • 201 Created
+    • et une ressource inexistante : 404 Not Found
+
+B. Application MVC Thymeleaf
+
+Une seconde interface devra exploiter le même backend métier : Navigateur vers @Controller vers @Service vers @Repository.
+
+3. DTO obligatoires
+
+Il sera interdit d'exposer directement les entités JPA dans l'API REST.
+
+Par exemple :
+
+    • CreateOrderRequest
+    • UpdateOrderRequest
+    • OrderResponse
+
+Avec validation :
+
+    • @NotNull
+    • @NotBlank
+    • @Positive
+    • @Size
+    • @Email
+
+(selon les besoins)
+
+4. Gestion centralisée des exceptions
+
+Chaque projet devra avoir un système de gestion des erreurs métier.
+
+Par exemple :
+
+    • ResourceNotFoundException
+    • BusinessException
+    • InvalidOperationException
+    • ConflictException
+
+Et un @RestControllerAdvice pour l'API REST.
+
+L'interface Thymeleaf devra également afficher des messages d'erreur compréhensibles à l'utilisateur.
+
+5. Spring Security
+
+Les applications devront gérer plusieurs rôles.
+
+Par exemple :
+
+    • ADMIN
+    • MANAGER
+    • OPERATOR
+    • USER
+
+Les droits devront être différents selon le rôle.
+
+Exemple :
+
+    • ADMIN : configuration ;
+    • MANAGER : gestion métier ;
+    • OPERATOR : opérations quotidiennes ;
+    • USER : consultation ou actions limitées.
+
+6. Recherche, filtrage et pagination
+
+Les listes importantes devront proposer :
+
+    • pagination ;
+    • tri ;
+    • recherche ;
+    • filtres.
+
+Exemple : GET /api/orders?page=0&size=10&sort=date,desc&status=EN_COURS
+
+7. Transactions
+
+Les opérations métier critiques devront être transactionnelles.
+
+Par exemple, dans le projet de parking : réserver une place, puis vérifier disponibilité, puis créer réservation, puis changer statut place.
+
+Ces opérations devront être exécutées dans une transaction.
+
+Même principe pour :
+
+    • génération des matchs ;
+    • attribution d'un livreur ;
+    • passage d'une étape de production ;
+    • attribution d'une course ;
+    • entrée/sortie du parking.
+
+Projet 1 – Système de gestion de tournois sportifs
+
+1. Contexte
+
+Une association sportive souhaite disposer d'une plateforme permettant aux organisateurs de créer et gérer des compétitions sportives.
+
+Le système doit être capable de gérer différents formats de compétition et de générer automatiquement les rencontres et classements en fonction des règles du tournoi.
+
+L'enjeu principal du projet est de concevoir un moteur métier de gestion de compétitions, et non simplement une application CRUD.
+
+2. Objectifs
+
+L'application devra permettre :
+
+    • de créer et configurer un tournoi ;
+    • de gérer les équipes participantes ;
+    • de générer automatiquement les rencontres ;
+    • d'enregistrer les résultats ;
+    • de calculer automatiquement les classements ;
+    • de gérer différents formats de compétition ;
+    • de contrôler les transitions entre les différentes phases ;
+    • de produire des statistiques sur le tournoi.
+
+3. Gestion des tournois
+
+Un tournoi devra comporter notamment :
+
+    • nom ;
+    • sport ;
+    • description ;
+    • date de début ;
+    • date de fin ;
+    • lieu ;
+    • nombre maximum d'équipes ;
+    • type de tournoi ;
+    • statut.
+
+Statuts possibles
+
+BROUILLON
+
+INSCRIPTION
+
+PROGRAMMÉ
+
+EN_COURS
+
+TERMINÉ
+
+ANNULÉ
+
+Le système devra empêcher certaines opérations en fonction du statut.
+
+Par exemple, un tournoi terminé ne peut plus recevoir d'équipe.
+
+4. Gestion des équipes
+
+L'organisateur pourra :
+
+    • créer une équipe ;
+    • modifier une équipe ;
+    • supprimer une équipe ;
+    • inscrire une équipe à un tournoi ;
+    • retirer une équipe avant le début de la compétition ;
+    • consulter son historique.
+
+Une équipe pourra avoir :
+
+    • nom ;
+    • logo ;
+    • ville ;
+    • entraîneur ;
+    • liste de joueurs ;
+    • statut.
+
+Le système devra empêcher l'inscription d'une même équipe deux fois dans le même tournoi.
+
+5. Formats de tournoi
+
+Le système devra obligatoirement gérer :
+
+    • Championnat
+
+Chaque équipe rencontre les autres équipes.
+
+Le système devra gérer :
+
+    • championnat simple ;
+    • championnat aller-retour.
+    • Élimination directe
+
+Le système devra générer automatiquement :
+
+    • huitièmes ;
+    • quarts ;
+    • demi-finales ;
+    • finale.
+
+Le nombre de tours devra être déterminé automatiquement en fonction du nombre de participants.
+
+La gestion d'un nombre d'équipes qui n'est pas une puissance de deux devra être prévue.
+
+Exemple : Si 10 équipes, certaines équipes peuvent bénéficier d'un tour préliminaire ou d'un exempt.
+
+6. Génération automatique des matchs
+
+L'application devra générer automatiquement les rencontres.
+
+Pour chaque match :
+
+    • équipe domicile ;
+    • équipe visiteuse ;
+    • date ;
+    • heure ;
+    • terrain ;
+    • phase ;
+    • statut ;
+    • score.
+
+Les matchs ne devront pas être générés deux fois.
+
+Le système devra également empêcher qu'une équipe joue deux matchs simultanément.
+
+7. Gestion des résultats
+
+L'organisateur pourra enregistrer le résultat d'un match.
+
+Pour un sport de type football :
+
+    • score équipe A ;
+    • score équipe B.
+
+Le système devra automatiquement :
+
+    • déterminer le vainqueur ;
+    • mettre à jour le classement ;
+    • mettre à jour les statistiques ;
+    • qualifier l'équipe suivante dans un tournoi à élimination directe.
+
+8. Classement
+
+Pour un championnat, le système devra calculer automatiquement :
+
+    • matchs joués ;
+    • victoires ;
+    • matchs nuls ;
+    • défaites ;
+    • points ;
+    • buts marqués ;
+    • buts encaissés ;
+    • différence de buts.
+
+Les critères de classement devront être configurables.
+
+Exemple :
+
+    • Points
+    • Différence de buts
+    • Buts marqués
+    • Confrontation directe
+
+9. Contraintes métier importantes
+
+Le système devra notamment empêcher :
+
+    • la modification d'un tournoi terminé ;
+    • l'inscription d'une équipe après le début du tournoi ;
+    • la création de deux matchs identiques ;
+    • la participation d'une équipe à deux matchs simultanés ;
+    • la modification d'un résultat sans recalcul du classement ;
+    • la qualification d'une équipe sans résultat valide.
+
+10. API REST
+
+Exemples :
+
+POST /api/tournaments
+
+GET /api/tournaments
+
+GET /api/tournaments/{id}
+
+PUT /api/tournaments/{id}
+
+DELETE /api/tournaments/{id}
+
+POST /api/tournaments/{id}/teams
+
+DELETE /api/tournaments/{id}/teams/{teamId}
+
+POST /api/tournaments/{id}/generate-matches
+
+GET /api/tournaments/{id}/matches
+
+GET /api/tournaments/{id}/ranking
+
+PUT /api/matches/{id}/result
+
+11. Interface Thymeleaf
+
+L'interface MVC devra proposer :
+
+    • tableau de bord ;
+    • gestion des tournois ;
+    • gestion des équipes ;
+    • génération du calendrier ;
+    • affichage des matchs ;
+    • saisie des résultats ;
+    • classement ;
+    • visualisation de l'arbre d'élimination.
+
+Projet 2 – Système de gestion de commandes dans une entreprise textile
+
+1. Contexte
+
+Une entreprise textile reçoit des commandes de différents clients et doit assurer leur fabrication avant leur livraison.
+
+Le projet consiste à développer un système permettant de suivre une commande depuis sa création jusqu'à sa livraison, tout en respectant un workflow de production strict.
+
+2. Objectifs
+
+L'application devra permettre :
+
+    • de gérer les clients ;
+    • de gérer les commandes ;
+    • de gérer les produits textiles ;
+    • de planifier la production ;
+    • de suivre les différentes étapes ;
+    • de calculer les délais ;
+    • de détecter les retards ;
+    • de bloquer les étapes lorsque les conditions nécessaires ne sont pas respectées.
+
+3. Gestion des commandes
+
+Une commande devra comporter :
+
+    • numéro ;
+    • client ;
+    • date de commande ;
+    • date prévue de livraison ;
+    • priorité ;
+    • statut ;
+    • lignes de commande.
+
+Une ligne pourra contenir :
+
+    • produit ;
+    • quantité ;
+    • taille ;
+    • couleur ;
+    • prix unitaire ;
+    • quantité produite.
+
+4. Workflow de production
+
+Chaque commande suit : commande, puis coupe, puis couture, puis finition, puis contrôle qualité, puis livraison.
+
+Chaque étape devra comporter :
+
+    • statut ;
+    • responsable ;
+    • date de début ;
+    • date de fin prévue ;
+    • date de fin réelle ;
+    • commentaire.
+
+5. Gestion du workflow
+
+Le passage d'une étape à une autre devra être contrôlé par le système.
+
+Par exemple : COUPE_TERMINEE, COUTURE_AUTORISEE, COUTURE_TERMINEE, FINITION_AUTORISEE
+
+Il sera impossible de commencer la couture si la coupe n'est pas terminée.
+
+6. Gestion des quantités
+
+Le système devra gérer les quantités produites.
+
+Exemple :
+
+Commande : 500 chemises
+
+Après production :
+
+    • Coupe : 500
+    • Couture : 480
+    • Finition : 450
+
+Le système devra signaler les incohérences.
+
+Il ne devra pas être possible de déclarer 500 produits finis si seulement 450 ont été traités à l'étape précédente.
+
+7. Gestion des délais
+
+Le système devra calculer :
+
+    • durée prévue ;
+    • durée réelle ;
+    • retard ;
+    • date prévisionnelle de livraison.
+
+Exemple :
+
+    • Date prévue : 20 septembre
+    • Date actuelle : 22 septembre
+
+Donc retard : 2 jours
+
+Le système devra également identifier les commandes susceptibles d'être livrées en retard.
+
+8. Priorité des commandes
+
+Une commande pourra avoir :
+
+    • NORMALE ;
+    • URGENTE ;
+    • TRÈS_URGENTE.
+
+Les commandes urgentes pourront être affichées prioritairement dans le tableau de bord de production.
+
+9. Contrôle qualité
+
+Avant livraison, une commande devra obligatoirement passer par une étape de contrôle qualité.
+
+Résultat :
+
+    • CONFORME ;
+    • NON_CONFORME.
+
+Une commande non conforme ne pourra pas être livrée.
+
+10. Contraintes métier
+
+Le système devra empêcher :
+
+    • de livrer une commande non terminée ;
+    • de passer une étape sans terminer la précédente ;
+    • de produire plus que la quantité commandée ;
+    • de valider une commande non conforme ;
+    • de modifier une commande déjà livrée.
+
+11. API REST
+
+Exemples :
+
+POST /api/orders
+
+GET /api/orders
+
+GET /api/orders/{id}
+
+POST /api/orders/{id}/production/start
+
+POST /api/orders/{id}/production/steps/{step}/complete
+
+GET /api/orders/{id}/production
+
+GET /api/orders/delayed
+
+POST /api/orders/{id}/quality-control
+
+POST /api/orders/{id}/delivery
+
+12. Interface Thymeleaf
+
+Elle devra proposer :
+
+    • dashboard de production ;
+    • commandes en cours ;
+    • commandes en retard ;
+    • détail d'une commande ;
+    • workflow visuel ;
+    • gestion des étapes ;
+    • contrôle qualité ;
+    • gestion des livraisons ;
+    • statistiques de production.
+
+Projet 3 – Application de gestion de flotte de taxis
+
+1. Contexte
+
+Une société de transport possède plusieurs véhicules et chauffeurs et souhaite automatiser la gestion de sa flotte et l'attribution des courses.
+
+L'application devra permettre de déterminer automatiquement quel chauffeur doit recevoir une nouvelle course.
+
+2. Objectifs
+
+Le système devra permettre :
+
+    • de gérer les chauffeurs ;
+    • de gérer les véhicules ;
+    • de gérer les clients ;
+    • de gérer les courses ;
+    • d'attribuer automatiquement les courses ;
+    • de suivre les disponibilités ;
+    • de calculer les revenus ;
+    • de produire des statistiques.
+
+3. Gestion des chauffeurs
+
+Informations :
+
+    • identité ;
+    • téléphone ;
+    • numéro de permis ;
+    • date d'expiration du permis ;
+    • statut ;
+    • date d'embauche.
+
+Statuts :
+
+    • DISPONIBLE
+    • EN_COURSE
+    • EN_PAUSE
+    • INDISPONIBLE
+    • SUSPENDU
+
+Un chauffeur dont le permis est expiré ne pourra pas recevoir de course.
+
+4. Gestion des véhicules
+
+Informations :
+
+    • immatriculation ;
+    • marque ;
+    • modèle ;
+    • année ;
+    • capacité ;
+    • kilométrage ;
+    • statut.
+
+Statuts :
+
+    • DISPONIBLE ;
+    • EN_COURSE ;
+    • MAINTENANCE ;
+    • HORS_SERVICE.
+
+5. Gestion des courses
+
+Une course comportera :
+
+    • client ;
+    • point de départ ;
+    • destination ;
+    • distance ;
+    • date ;
+    • heure ;
+    • tarif ;
+    • chauffeur ;
+    • véhicule ;
+    • statut.
+
+Statuts :
+
+    • EN_ATTENTE
+    • ASSIGNEE
+    • EN_COURS
+    • TERMINEE
+    • ANNULEE
+
+6. Attribution automatique
+
+Le système devra déterminer les chauffeurs éligibles.
+
+Un chauffeur doit :
+
+    • être disponible ;
+    • disposer d'un permis valide ;
+    • être associé à un véhicule disponible.
+
+Le système pourra calculer un score :
+
+Le chauffeur présentant le meilleur score pourra être proposé automatiquement.
+
+Les coefficients devront idéalement être configurables.
+
+7. Gestion des conflits
+
+Le système devra empêcher :
+
+    • l'attribution d'une course à deux chauffeurs ;
+    • l'attribution de deux courses simultanées à un chauffeur ;
+    • l'utilisation d'un véhicule en maintenance ;
+    • l'utilisation d'un chauffeur suspendu.
+
+8. Calcul des revenus
+
+Le système devra calculer :
+
+    • chiffre d'affaires par course ;
+    • revenu par chauffeur ;
+    • revenu par véhicule ;
+    • revenu quotidien ;
+    • revenu mensuel.
+
+Exemple :
+
+Une commission pourra être appliquée :
+
+9. Statistiques
+
+Le tableau de bord devra permettre d'obtenir :
+
+    • nombre de courses ;
+    • chiffre d'affaires ;
+    • chauffeur le plus actif ;
+    • véhicule le plus utilisé ;
+    • distance parcourue ;
+    • taux d'annulation ;
+    • revenu moyen par course.
+
+Les statistiques devront être filtrables par période.
+
+10. API REST
+
+Exemples :
+
+POST /api/drivers
+
+GET /api/drivers
+
+POST /api/vehicles
+
+GET /api/vehicles
+
+POST /api/rides
+
+GET /api/rides
+
+POST /api/rides/{id}/assign
+
+POST /api/rides/{id}/start
+
+POST /api/rides/{id}/complete
+
+GET /api/statistics/revenue
+
+GET /api/statistics/activity
+
+11. Interface Thymeleaf
+
+    • Dashboard ;
+    • chauffeurs ;
+    • véhicules ;
+    • courses ;
+    • attribution des courses ;
+    • disponibilité de la flotte ;
+    • revenus ;
+    • statistiques.
+
+Projet 4 – Système de gestion d'un parking
+
+1. Contexte
+
+Un parking privé souhaite informatiser la gestion de ses places, de ses abonnés et des entrées/sorties.
+
+Le système devra gérer simultanément les réservations, l'occupation du parking et la tarification.
+
+2. Objectifs
+
+L'application devra permettre :
+
+    • de gérer les utilisateurs ;
+    • de gérer les véhicules ;
+    • de gérer les places ;
+    • de gérer les réservations ;
+    • de gérer les abonnements ;
+    • d'enregistrer les entrées/sorties ;
+    • de calculer automatiquement les tarifs ;
+    • de gérer des places prioritaires.
+
+3. Gestion des places
+
+Une place devra posséder :
+
+    • numéro ;
+    • zone ;
+    • type ;
+    • statut.
+
+Types :
+
+    • STANDARD ;
+    • PMR ;
+    • VIP ;
+    • ABONNÉ.
+
+Statuts :
+
+    • LIBRE ;
+    • RÉSERVÉE ;
+    • OCCUPÉE ;
+    • HORS_SERVICE.
+
+4. Réservations
+
+Une réservation comportera :
+
+    • utilisateur ;
+    • véhicule ;
+    • date/heure d'arrivée prévue ;
+    • date/heure de départ prévue ;
+    • place ;
+    • statut.
+
+Le système devra empêcher deux réservations incompatibles sur une même place.
+
+5. Abonnements
+
+Types :
+
+    • journalier ;
+    • hebdomadaire ;
+    • mensuel ;
+    • annuel.
+
+Un abonnement devra comporter :
+
+    • utilisateur ;
+    • véhicule ;
+    • type ;
+    • date de début ;
+    • date de fin ;
+    • statut.
+
+Le système devra automatiquement déterminer si l'abonnement est valide.
+
+6. Entrées et sorties
+
+Lorsqu'un véhicule entre : LIBRE vers OCCUPÉE
+
+Lorsqu'il sort : OCCUPÉE vers LIBRE
+
+Le système devra conserver l'historique.
+
+7. Attribution automatique des places
+
+Lors d'une entrée ou réservation, le système devra rechercher les places compatibles.
+
+Exemple : utilisateur VIP, puis recherche place VIP, puis si aucune place VIP alors recherche selon règle de substitution
+
+Les règles de priorité devront être définies par le système.
+
+8. Tarification
+
+Le tarif pourra dépendre :
+
+    • de la durée ;
+    • de la zone ;
+    • du type d'utilisateur ;
+    • du type de véhicule ;
+    • de l'abonnement.
+
+Exemple :
+
+Avec possibilité de :
+
+    • tarif minimum ;
+    • forfait journalier ;
+    • réduction abonné ;
+    • majoration après dépassement.
+
+9. Gestion des dépassements
+
+Si un client réserve jusqu'à 15h mais quitte le parking à 17h :
+
+    • Durée prévue : 3h
+    • Durée réelle : 5h
+
+Alors 2 heures supplémentaires facturées
+
+10. API REST
+
+Exemples :
+
+POST /api/parking/spaces
+
+GET /api/parking/spaces/available
+
+POST /api/reservations
+
+GET /api/reservations
+
+POST /api/parking/entries
+
+POST /api/parking/exits
+
+POST /api/subscriptions
+
+GET /api/subscriptions
+
+GET /api/parking/occupancy
+
+GET /api/parking/revenue
+
+11. Interface Thymeleaf
+
+    • plan du parking ;
+    • places disponibles ;
+    • réservations ;
+    • abonnements ;
+    • entrées/sorties ;
+    • facturation ;
+    • statistiques d'occupation.
+
+Il serait intéressant de faire une représentation visuelle des places libres/occupées.
+
+Projet 5 – Système de gestion d'un service de livraison
+
+1. Contexte
+
+Une entreprise spécialisée dans la livraison souhaite mettre en place une plateforme permettant de gérer ses commandes, ses livreurs et le suivi des livraisons.
+
+L'application devra notamment proposer un mécanisme intelligent d'attribution des livreurs.
+
+2. Objectifs
+
+Le système devra permettre :
+
+    • de gérer les clients ;
+    • de créer des commandes ;
+    • de gérer les colis ;
+    • de gérer les livreurs ;
+    • d'attribuer automatiquement les livraisons ;
+    • de calculer les prix ;
+    • de suivre les statuts ;
+    • de gérer les incidents ;
+    • de produire des statistiques.
+
+3. Gestion des commandes
+
+Une commande devra comporter :
+
+    • numéro ;
+    • client ;
+    • adresse d'enlèvement ;
+    • adresse de livraison ;
+    • poids ;
+    • volume ;
+    • priorité ;
+    • distance ;
+    • prix ;
+    • date prévue.
+
+4. Gestion des livreurs
+
+Informations :
+
+    • identité ;
+    • téléphone ;
+    • véhicule ;
+    • zone d'activité ;
+    • statut ;
+    • capacité maximale.
+
+Statuts :
+
+    • DISPONIBLE
+    • EN_LIVRAISON
+    • INDISPONIBLE
+    • PAUSE
+
+5. Attribution automatique
+
+Le système devra rechercher les livreurs compatibles.
+
+Critères :
+
+    • disponibilité ;
+    • distance ;
+    • zone ;
+    • capacité du véhicule ;
+    • nombre de livraisons déjà affectées ;
+    • priorité de la commande.
+
+Un système de score pourra être utilisé.
+
+Exemple :
+
+Le système sélectionnera le livreur ayant le meilleur score.
+
+6. Gestion du statut
+
+Une commande suivra un workflow : CRÉÉE, puis ASSIGNÉE, puis PRISE_EN_CHARGE, puis EN_TRANSIT, puis LIVRÉE
+
+Avec des états alternatifs :
+
+    • ANNULÉE
+    • ÉCHEC_LIVRAISON
+    • RETOURNÉE
+
+Le système devra empêcher les transitions incohérentes.
+
+Par exemple : Une commande LIVRÉE ne peut plus revenir à EN_TRANSIT.
+
+7. Calcul du prix
+
+Le prix pourra dépendre :
+
+    • de la distance ;
+    • du poids ;
+    • du volume ;
+    • de la priorité ;
+    • de la zone.
+
+Exemple :
+
+Les tarifs devront être configurables par l'administrateur.
+
+8. Gestion des incidents
+
+Le livreur pourra signaler :
+
+    • client absent ;
+    • adresse incorrecte ;
+    • colis endommagé ;
+    • véhicule en panne ;
+    • refus du client.
+
+Un incident devra être enregistré avec :
+
+    • type ;
+    • date ;
+    • description ;
+    • commande concernée ;
+    • livreur ;
+    • résolution.
+
+9. Preuve de livraison
+
+Pour qu'une commande puisse être considérée comme livrée, le système devra pouvoir enregistrer :
+
+    • date et heure ;
+    • nom du réceptionnaire ;
+    • code de confirmation ;
+    • commentaire.
+
+Une commande ne pourra être clôturée comme livrée que si les informations obligatoires sont présentes.
+
+10. Statistiques
+
+Le système devra calculer :
+
+    • nombre de livraisons ;
+    • taux de réussite ;
+    • taux d'échec ;
+    • délai moyen ;
+    • chiffre d'affaires ;
+    • nombre de livraisons par livreur ;
+    • revenu moyen ;
+    • distance totale parcourue.
+
+Les statistiques devront pouvoir être filtrées :
+
+    • par jour ;
+    • semaine ;
+    • mois ;
+    • livreur ;
+    • zone.
+
+11. API REST
+
+Exemples :
+
+POST /api/orders
+
+GET /api/orders
+
+GET /api/orders/{id}
+
+POST /api/orders/{id}/assign
+
+POST /api/orders/{id}/pickup
+
+POST /api/orders/{id}/start
+
+POST /api/orders/{id}/deliver
+
+POST /api/orders/{id}/cancel
+
+GET /api/deliverers/available
+
+GET /api/orders/{id}/tracking
+
+POST /api/orders/{id}/incidents
+
+GET /api/statistics/deliveries
+
+GET /api/statistics/revenue
+
+12. Interface Thymeleaf
+
+    • dashboard ;
+    • commandes ;
+    • livreurs ;
+    • commandes en attente ;
+    • affectation ;
+    • suivi des livraisons ;
+    • incidents ;
+    • statistiques ;
+    • historique.
+

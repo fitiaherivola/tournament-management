@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' – Gestion de tournois'">Gestion de tournois</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<header class="topbar" th:fragment="navbar(active)">
+    <div class="inner">
+        <a class="brand" th:href="@{/}">Tournois<span>Pro</span></a>
+        <nav>
+            <a th:href="@{/}" th:classappend="${active == 'home'} ? 'active'">Tableau de bord</a>
+            <a th:href="@{/tournaments}" th:classappend="${active == 'tournaments'} ? 'active'">Tournois</a>
+            <a th:href="@{/teams}" th:classappend="${active == 'teams'} ? 'active'">Équipes</a>
+        </nav>
+        <div class="user" sec:authorize="isAuthenticated()">
+            <span sec:authentication="name">user</span>
+            <span class="badge" sec:authorize="hasRole('ADMIN')">ADMIN</span>
+            <span class="badge" sec:authorize="hasRole('MANAGER')">MANAGER</span>
+            <span class="badge" sec:authorize="hasRole('OPERATOR')">OPERATOR</span>
+            <span class="badge" sec:authorize="hasRole('USER')">USER</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn small secondary">Déconnexion</button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<div th:fragment="messages">
+    <div class="alert success" th:if="${success}" th:text="${success}">Succès</div>
+    <div class="alert error" th:if="${error}" th:text="${error}">Erreur</div>
+</div>
+
+<nav class="pager" th:fragment="pager(page, path, qs)" th:if="${page.totalPages > 1}">
+    <a th:if="${!page.first}" th:href="${path + '?' + qs + 'page=' + (page.number - 1)}">‹ Précédent</a>
+    <th:block th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}">
+        <th:block th:if="${i == 0 or i == page.totalPages - 1 or (i >= page.number - 2 and i <= page.number + 2)}">
+            <span class="current" th:if="${i == page.number}" th:text="${i + 1}">1</span>
+            <a th:unless="${i == page.number}" th:href="${path + '?' + qs + 'page=' + i}" th:text="${i + 1}">2</a>
+        </th:block>
+        <span class="gap" th:if="${(i == page.number - 3 and i > 0) or (i == page.number + 3 and i < page.totalPages - 1)}">…</span>
+    </th:block>
+    <a th:if="${!page.last}" th:href="${path + '?' + qs + 'page=' + (page.number + 1)}">Suivant ›</a>
+    <span class="muted" th:text="|${page.totalElements} résultat(s)|"></span>
+</nav>
+
+<th:block th:fragment="teamName(t)"><a th:if="${t != null}" th:href="@{/teams/{id}(id=${t.id})}" th:text="${t.name}">Équipe</a><em class="muted" th:if="${t == null}">À déterminer</em></th:block>
+
+<div class="table-wrap" th:fragment="matchTable(matches, showTournament)">
+    <table>
+        <thead>
+        <tr>
+            <th>Phase</th><th>Date</th><th>Domicile</th><th class="num">Score</th><th>Visiteur</th>
+            <th>Terrain</th><th>Statut</th><th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${matches}">
+            <td>
+                <a th:if="${showTournament}" th:href="@{/tournaments/{id}(id=${m.tournamentId})}" th:text="${m.tournamentName}">Tournoi</a>
+                <div>
+                    <span th:text="${m.phase.label}">Phase</span>
+                    <span class="muted" th:if="${m.phase.name() == 'CHAMPIONNAT'}" th:text="|J${m.round}${m.leg == 2 ? ' retour' : ''}|"></span>
+                </div>
+            </td>
+            <td th:text="${#temporals.format(m.scheduledAt, 'dd/MM/yyyy HH:mm')}">date</td>
+            <td th:classappend="${m.winner != null and m.homeTeam != null and m.winner.id == m.homeTeam.id} ? 'winner'">
+                <th:block th:replace="~{fragments/layout :: teamName(${m.homeTeam})}"/>
+            </td>
+            <td class="score">
+                <span th:if="${m.status.name() == 'TERMINE'}">
+                    <strong th:text="|${m.homeScore} - ${m.awayScore}|">1 - 0</strong>
+                    <small class="muted" th:if="${m.homePenalties != null}" th:text="|(t.a.b. ${m.homePenalties}-${m.awayPenalties})|"></small>
+                </span>
+                <span class="muted" th:if="${m.status.name() == 'EXEMPT'}">Exempt</span>
+                <span class="muted" th:if="${m.status.name() != 'TERMINE' and m.status.name() != 'EXEMPT'}">vs</span>
+            </td>
+            <td th:classappend="${m.winner != null and m.awayTeam != null and m.winner.id == m.awayTeam.id} ? 'winner'">
+                <th:block th:replace="~{fragments/layout :: teamName(${m.awayTeam})}"/>
+            </td>
+            <td th:text="${m.venue}">Terrain</td>
+            <td><span class="badge" th:classappend="${'badge-' + m.status.name().toLowerCase()}" th:text="${m.status.label}">Statut</span></td>
+            <td class="actions">
+                <a class="btn small" sec:authorize="hasAnyRole('ADMIN','MANAGER','OPERATOR')"
+                   th:if="${(m.status.name() == 'PROGRAMME' or m.status.name() == 'TERMINE') and m.homeTeam != null and m.awayTeam != null}"
+                   th:href="@{/matches/{id}/result(id=${m.id})}"
+                   th:text="${m.status.name() == 'TERMINE'} ? 'Corriger' : 'Saisir le résultat'">Résultat</a>
+                <a class="btn small secondary" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                   th:if="${m.status.name() == 'PROGRAMME' or m.status.name() == 'EN_ATTENTE'}"
+                   th:href="@{/matches/{id}/reschedule(id=${m.id})}">Reprogrammer</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(matches)}"><td colspan="8" class="muted">Aucun match.</td></tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

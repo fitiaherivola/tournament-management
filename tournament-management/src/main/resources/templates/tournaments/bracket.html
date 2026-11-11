@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Arbre')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: messages}"></div>
+    <div class="page-head">
+        <div>
+            <h1>Arbre d'élimination</h1>
+            <p class="muted"><a th:href="@{/tournaments/{id}(id=${tournament.id})}" th:text="${tournament.name}">Tournoi</a></p>
+        </div>
+        <div class="actions"><a class="btn secondary" th:href="@{/tournaments/{id}/matches(id=${tournament.id})}">Liste des matchs</a></div>
+    </div>
+
+    <div class="card" th:if="${#lists.isEmpty(bracket.rounds)}">
+        <span class="muted">Le calendrier n'a pas encore été généré : l'arbre apparaîtra après la génération des matchs.</span>
+    </div>
+
+    <div class="bracket" th:unless="${#lists.isEmpty(bracket.rounds)}">
+        <div class="round" th:each="round : ${bracket.rounds}">
+            <h3 th:text="${round.label}">Tour</h3>
+            <div class="match" th:each="m : ${round.matches}">
+                <div class="team-line" th:classappend="${m.winner != null and m.homeTeam != null and m.winner.id == m.homeTeam.id} ? 'winner'">
+                    <span th:text="${m.homeTeam != null ? m.homeTeam.name : 'À déterminer'}">Équipe A</span>
+                    <span th:if="${m.status.name() == 'TERMINE'}" th:text="${m.homeScore}">0</span>
+                </div>
+                <div class="team-line" th:classappend="${m.winner != null and m.awayTeam != null and m.winner.id == m.awayTeam.id} ? 'winner'">
+                    <span th:text="${m.status.name() == 'EXEMPT' ? 'Exempt' : (m.awayTeam != null ? m.awayTeam.name : 'À déterminer')}">Équipe B</span>
+                    <span th:if="${m.status.name() == 'TERMINE'}" th:text="${m.awayScore}">0</span>
+                </div>
+                <div class="meta">
+                    <span th:text="${m.status.name() == 'EXEMPT' ? 'Qualifié (exempt)' : #temporals.format(m.scheduledAt, 'dd/MM HH:mm')}">date</span>
+                    <span th:if="${m.homePenalties != null}" th:text="|t.a.b. ${m.homePenalties}-${m.awayPenalties}|"></span>
+                    <a sec:authorize="hasAnyRole('ADMIN','MANAGER','OPERATOR')"
+                       th:if="${m.status.name() == 'PROGRAMME' or m.status.name() == 'TERMINE'}"
+                       th:href="@{/matches/{id}/result(id=${m.id})}"
+                       th:text="${m.status.name() == 'TERMINE' ? 'Corriger' : 'Résultat'}">Résultat</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card champion" th:if="${bracket.champion != null}">
+        🏆 Champion : <strong th:text="${bracket.champion.name}">Équipe</strong>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Classement')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: messages}"></div>
+    <div class="page-head">
+        <div>
+            <h1>Classement</h1>
+            <p class="muted"><a th:href="@{/tournaments/{id}(id=${tournament.id})}" th:text="${tournament.name}">Tournoi</a></p>
+        </div>
+        <div class="actions">
+            <a class="btn secondary" th:href="@{/tournaments/{id}/matches(id=${tournament.id})}">Matchs</a>
+            <a class="btn secondary" sec:authorize="hasRole('ADMIN')" th:unless="${tournament.status.isFinal()}"
+               th:href="@{/tournaments/{id}/ranking-config(id=${tournament.id})}">Configurer</a>
+        </div>
+    </div>
+    <p class="muted">Départage :
+        <span th:each="c, it : ${tournament.rankingCriteria}" th:text="${c.label + (it.last ? '' : ' › ')}">critère</span>
+        · Barème : <span th:text="|victoire ${tournament.pointsForWin}, nul ${tournament.pointsForDraw}, défaite ${tournament.pointsForLoss}|">3/1/0</span>
+    </p>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th class="num">#</th><th>Équipe</th><th class="num">J</th><th class="num">G</th><th class="num">N</th><th class="num">P</th>
+                <th class="num">BP</th><th class="num">BC</th><th class="num">Diff</th><th class="num">Pts</th></tr></thead>
+            <tbody>
+            <tr th:each="s : ${standings}" th:classappend="${s.rank == 1 and s.played > 0} ? 'top'">
+                <td class="num" th:text="${s.rank}">1</td>
+                <td><a th:href="@{/teams/{id}(id=${s.teamId})}" th:text="${s.teamName}">Équipe</a></td>
+                <td class="num" th:text="${s.played}">0</td>
+                <td class="num" th:text="${s.wins}">0</td>
+                <td class="num" th:text="${s.draws}">0</td>
+                <td class="num" th:text="${s.losses}">0</td>
+                <td class="num" th:text="${s.goalsFor}">0</td>
+                <td class="num" th:text="${s.goalsAgainst}">0</td>
+                <td class="num" th:text="${s.goalDifference > 0 ? '+' + s.goalDifference : s.goalDifference}">0</td>
+                <td class="num"><strong th:text="${s.points}">0</strong></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(standings)}"><td colspan="10" class="muted">Aucune équipe inscrite.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="hint">J = joués, G = gagnés, N = nuls, P = perdus, BP = buts pour, BC = buts contre. Le classement est recalculé à chaque
+        affichage à partir des résultats : toute correction de score est immédiatement répercutée.</p>
+</main>
+</body>
+</html>

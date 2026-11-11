@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Erreur')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('')}"></header>
+<main class="container">
+    <div class="card">
+        <p class="muted" th:text="${status != null ? 'Erreur ' + status : 'Erreur'}">Erreur</p>
+        <h1 th:text="${#strings.isEmpty(title) ? 'Une erreur est survenue' : title}">Une erreur est survenue</h1>
+        <p th:text="${#strings.isEmpty(message) ? 'La page demandée est indisponible.' : message}">Message</p>
+        <div class="actions">
+            <a class="btn" th:href="@{/}">Retour au tableau de bord</a>
+            <a class="btn secondary" href="javascript:history.back()">Page précédente</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

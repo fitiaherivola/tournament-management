@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reprogrammer')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <h1>Reprogrammer un match</h1>
+    <p class="muted"><a th:href="@{/tournaments/{id}(id=${match.tournamentId})}" th:text="${match.tournamentName}">Tournoi</a>
+        · <span th:text="${match.homeTeam != null ? match.homeTeam.name : 'À déterminer'}">A</span> vs
+        <span th:text="${match.awayTeam != null ? match.awayTeam.name : 'À déterminer'}">B</span></p>
+    <form class="card" th:action="@{/matches/{id}/reschedule(id=${match.id})}" th:object="${form}" method="post">
+        <div class="alert error" th:if="${#fields.hasErrors('*')}">
+            <strong>Reprogrammation impossible :</strong>
+            <ul><li th:each="err : ${#fields.errors('*')}" th:text="${err}">Erreur</li></ul>
+        </div>
+        <div class="form-grid">
+            <div class="field"><label for="scheduledAt">Date et heure *</label>
+                <input type="datetime-local" id="scheduledAt" th:field="*{scheduledAt}" required></div>
+            <div class="field"><label for="venue">Terrain *</label>
+                <input type="text" id="venue" th:field="*{venue}" maxlength="100" required></div>
+        </div>
+        <p class="hint">Une équipe ne peut pas jouer deux matchs simultanés, et un terrain ne peut pas accueillir deux matchs en même temps.</p>
+        <div class="actions">
+            <button type="submit" class="btn">Enregistrer</button>
+            <a class="btn secondary" th:href="@{/tournaments/{id}/matches(id=${match.tournamentId})}">Annuler</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

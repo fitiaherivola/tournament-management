@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Équipe')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('teams')}"></header>
+<main class="container">
+    <h1 th:text="${formTitle}">Équipe</h1>
+    <form class="card" th:action="@{${formAction}}" th:object="${form}" method="post">
+        <div class="alert error" th:if="${#fields.hasErrors('*')}">
+            <strong>Veuillez corriger les points suivants :</strong>
+            <ul><li th:each="err : ${#fields.errors('*')}" th:text="${err}">Erreur</li></ul>
+        </div>
+        <div class="form-grid">
+            <div class="field"><label for="name">Nom *</label>
+                <input type="text" id="name" th:field="*{name}" maxlength="100"></div>
+            <div class="field"><label for="city">Ville *</label>
+                <input type="text" id="city" th:field="*{city}" maxlength="100"></div>
+            <div class="field"><label for="coach">Entraîneur *</label>
+                <input type="text" id="coach" th:field="*{coach}" maxlength="100"></div>
+            <div class="field"><label for="logo">Logo (URL)</label>
+                <input type="text" id="logo" th:field="*{logo}" maxlength="500"></div>
+            <div class="field"><label for="status">Statut</label>
+                <select id="status" th:field="*{status}">
+                    <option th:each="s : ${teamStatuses}" th:value="${s}" th:text="${s.label}">Statut</option>
+                </select></div>
+        </div>
+        <div class="field"><label for="players">Joueurs</label>
+            <textarea id="players" th:field="*{players}"></textarea>
+            <span class="hint">Noms séparés par des virgules (50 joueurs maximum).</span></div>
+        <div class="actions">
+            <button type="submit" class="btn">Enregistrer</button>
+            <a class="btn secondary" th:href="@{/teams}">Annuler</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

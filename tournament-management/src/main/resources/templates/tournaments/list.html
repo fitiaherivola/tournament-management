@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Tournois')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: messages}"></div>
+    <div class="page-head">
+        <div><h1>Tournois</h1><p class="muted">Recherche, filtres, tri et pagination</p></div>
+        <div class="actions" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+            <a class="btn" th:href="@{/tournaments/new}">Nouveau tournoi</a>
+        </div>
+    </div>
+
+    <form class="filters card" th:action="@{/tournaments}" th:object="${filter}" method="get">
+        <div class="field"><label for="search">Recherche</label>
+            <input type="text" id="search" th:field="*{search}" placeholder="Nom, sport ou lieu"></div>
+        <div class="field"><label for="status">Statut</label>
+            <select id="status" th:field="*{status}">
+                <option value="">Tous</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}">Statut</option>
+            </select></div>
+        <div class="field"><label for="type">Type</label>
+            <select id="type" th:field="*{type}">
+                <option value="">Tous</option>
+                <option th:each="t : ${types}" th:value="${t}" th:text="${t.label}">Type</option>
+            </select></div>
+        <div class="field"><label for="sport">Sport</label>
+            <input type="text" id="sport" th:field="*{sport}"></div>
+        <div class="field"><label for="startFrom">Début après le</label>
+            <input type="date" id="startFrom" th:field="*{startFrom}"></div>
+        <div class="field"><label for="startTo">Début avant le</label>
+            <input type="date" id="startTo" th:field="*{startTo}"></div>
+        <div class="field"><label for="sort">Tri</label>
+            <select id="sort" name="sort">
+                <option value="startDate,desc" th:selected="${param.sort != null and param.sort[0] == 'startDate,desc'}">Date de début (récent)</option>
+                <option value="startDate,asc" th:selected="${param.sort != null and param.sort[0] == 'startDate,asc'}">Date de début (ancien)</option>
+                <option value="name,asc" th:selected="${param.sort != null and param.sort[0] == 'name,asc'}">Nom (A → Z)</option>
+                <option value="name,desc" th:selected="${param.sort != null and param.sort[0] == 'name,desc'}">Nom (Z → A)</option>
+                <option value="status,asc" th:selected="${param.sort != null and param.sort[0] == 'status,asc'}">Statut</option>
+            </select></div>
+        <div class="field"><label for="size">Par page</label>
+            <select id="size" name="size">
+                <option value="5" th:selected="${page.size == 5}">5</option>
+                <option value="10" th:selected="${page.size == 10}">10</option>
+                <option value="20" th:selected="${page.size == 20}">20</option>
+                <option value="50" th:selected="${page.size == 50}">50</option>
+            </select></div>
+        <button class="btn" type="submit">Filtrer</button>
+        <a class="btn secondary" th:href="@{/tournaments}">Réinitialiser</a>
+    </form>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Tournoi</th><th>Sport</th><th>Type</th><th>Dates</th><th>Lieu</th><th class="num">Équipes</th><th>Statut</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${page.content}">
+                <td><a th:href="@{/tournaments/{id}(id=${t.id})}" th:text="${t.name}">Tournoi</a></td>
+                <td th:text="${t.sport}">Sport</td>
+                <td th:text="${t.type.label}">Type</td>
+                <td th:text="|${#temporals.format(t.startDate, 'dd/MM/yyyy')} → ${#temporals.format(t.endDate, 'dd/MM/yyyy')}|">dates</td>
+                <td th:text="${t.location}">Lieu</td>
+                <td class="num" th:text="|${t.registeredTeams} / ${t.maxTeams}|">0 / 0</td>
+                <td><span class="badge" th:classappend="${'badge-' + t.status.name().toLowerCase()}" th:text="${t.status.label}">Statut</span></td>
+            </tr>
+            <tr th:if="${page.empty}"><td colspan="7" class="muted">Aucun tournoi ne correspond à la recherche.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <nav th:replace="~{fragments/layout :: pager(${page}, ${path}, ${qs})}"></nav>
+</main>
+</body>
+</html>

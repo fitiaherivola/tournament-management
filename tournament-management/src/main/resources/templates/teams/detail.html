@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${history.team.name})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('teams')}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: messages}"></div>
+    <div class="page-head">
+        <div>
+            <h1><span th:text="${history.team.name}">Équipe</span>
+                <span class="badge" th:classappend="${'badge-' + history.team.status.name().toLowerCase()}" th:text="${history.team.status.label}">Statut</span></h1>
+            <p class="muted" th:text="|${history.team.city} · entraîneur : ${history.team.coach}|">infos</p>
+        </div>
+        <div class="actions" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+            <a class="btn secondary" th:href="@{/teams/{id}/edit(id=${history.team.id})}">Modifier</a>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="stat"><div class="n" th:text="${history.matchesPlayed}">0</div><div class="l">Matchs joués</div></div>
+        <div class="stat"><div class="n" th:text="${history.wins}">0</div><div class="l">Victoires</div></div>
+        <div class="stat"><div class="n" th:text="${history.draws}">0</div><div class="l">Nuls</div></div>
+        <div class="stat"><div class="n" th:text="${history.losses}">0</div><div class="l">Défaites</div></div>
+    </div>
+
+    <div class="card" th:unless="${#lists.isEmpty(history.team.players)}">
+        <strong>Joueurs (<span th:text="${#lists.size(history.team.players)}">0</span>)</strong>
+        <p th:text="${#strings.listJoin(history.team.players, ', ')}">Joueurs</p>
+    </div>
+
+    <h2>Participations</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Tournoi</th><th>Statut du tournoi</th><th>Inscription</th><th>Inscrite le</th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${history.participations}">
+                <td><a th:href="@{/tournaments/{id}(id=${p.tournamentId})}" th:text="${p.tournamentName}">Tournoi</a></td>
+                <td><span class="badge" th:classappend="${'badge-' + p.tournamentStatus.name().toLowerCase()}" th:text="${p.tournamentStatus.label}">Statut</span></td>
+                <td><span class="badge" th:classappend="${'badge-' + p.registrationStatus.name().toLowerCase()}" th:text="${p.registrationStatus.label}">Inscrite</span></td>
+                <td th:text="${#temporals.format(p.registeredAt, 'dd/MM/yyyy')}">date</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(history.participations)}"><td colspan="4" class="muted">Aucune participation.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Matchs</h2>
+    <div th:replace="~{fragments/layout :: matchTable(${history.matches}, true)}"></div>
+</main>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Matchs')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: messages}"></div>
+    <div class="page-head">
+        <div>
+            <h1>Matchs</h1>
+            <p class="muted"><a th:href="@{/tournaments/{id}(id=${tournament.id})}" th:text="${tournament.name}">Tournoi</a></p>
+        </div>
+        <div class="actions">
+            <a class="btn secondary" th:if="${tournament.type.isChampionship()}" th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}">Classement</a>
+            <a class="btn secondary" th:unless="${tournament.type.isChampionship()}" th:href="@{/tournaments/{id}/bracket(id=${tournament.id})}">Arbre d'élimination</a>
+        </div>
+    </div>
+
+    <form class="filters card" th:action="@{/tournaments/{id}/matches(id=${tournament.id})}" th:object="${filter}" method="get">
+        <div class="field"><label for="phase">Phase</label>
+            <select id="phase" th:field="*{phase}">
+                <option value="">Toutes</option>
+                <option th:each="p : ${phases}" th:value="${p}" th:text="${p.label}">Phase</option>
+            </select></div>
+        <div class="field"><label for="status">Statut</label>
+            <select id="status" th:field="*{status}">
+                <option value="">Tous</option>
+                <option th:each="s : ${matchStatuses}" th:value="${s}" th:text="${s.label}">Statut</option>
+            </select></div>
+        <div class="field"><label for="teamId">Équipe</label>
+            <select id="teamId" th:field="*{teamId}">
+                <option value="">Toutes</option>
+                <option th:each="r : ${teams}" th:value="${r.teamId}" th:text="${r.teamName}">Équipe</option>
+            </select></div>
+        <div class="field"><label for="round">Journée / tour</label>
+            <input type="number" id="round" th:field="*{round}" min="1" style="min-width:90px"></div>
+        <div class="field"><label for="venue">Terrain</label>
+            <input type="text" id="venue" th:field="*{venue}"></div>
+        <div class="field"><label for="from">Du</label>
+            <input type="date" id="from" th:field="*{from}"></div>
+        <div class="field"><label for="to">Au</label>
+            <input type="date" id="to" th:field="*{to}"></div>
+        <div class="field"><label for="sort">Tri</label>
+            <select id="sort" name="sort">
+                <option value="round,asc" th:selected="${param.sort != null and param.sort[0] == 'round,asc'}">Journée / tour</option>
+                <option value="scheduledAt,asc" th:selected="${param.sort != null and param.sort[0] == 'scheduledAt,asc'}">Date (croissante)</option>
+                <option value="scheduledAt,desc" th:selected="${param.sort != null and param.sort[0] == 'scheduledAt,desc'}">Date (décroissante)</option>
+                <option value="status,asc" th:selected="${param.sort != null and param.sort[0] == 'status,asc'}">Statut</option>
+            </select></div>
+        <button class="btn" type="submit">Filtrer</button>
+        <a class="btn secondary" th:href="@{/tournaments/{id}/matches(id=${tournament.id})}">Réinitialiser</a>
+    </form>
+
+    <div th:replace="~{fragments/layout :: matchTable(${page.content}, false)}"></div>
+    <nav th:replace="~{fragments/layout :: pager(${page}, ${path}, ${qs})}"></nav>
+</main>
+</body>
+</html>

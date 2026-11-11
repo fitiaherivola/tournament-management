@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${tournament.name})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: messages}"></div>
+    <div class="page-head">
+        <div>
+            <h1><span th:text="${tournament.name}">Tournoi</span>
+                <span class="badge" th:classappend="${'badge-' + tournament.status.name().toLowerCase()}" th:text="${tournament.status.label}">Statut</span></h1>
+            <p class="muted" th:text="|${tournament.sport} · ${tournament.type.label} · ${tournament.location} · du ${#temporals.format(tournament.startDate, 'dd/MM/yyyy')} au ${#temporals.format(tournament.endDate, 'dd/MM/yyyy')}|">infos</p>
+        </div>
+        <div class="actions">
+            <a class="btn secondary" th:href="@{/tournaments/{id}/matches(id=${tournament.id})}">Matchs</a>
+            <a class="btn secondary" th:if="${tournament.type.isChampionship()}" th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}">Classement</a>
+            <a class="btn secondary" th:unless="${tournament.type.isChampionship()}" th:href="@{/tournaments/{id}/bracket(id=${tournament.id})}">Arbre d'élimination</a>
+            <a class="btn secondary" th:href="@{/tournaments/{id}/statistics(id=${tournament.id})}">Statistiques</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="actions">
+            <form th:if="${tournament.status.name() == 'BROUILLON'}" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                  th:action="@{/tournaments/{id}/open-registration(id=${tournament.id})}" method="post">
+                <button class="btn" type="submit">Ouvrir les inscriptions</button></form>
+            <a class="btn" th:if="${tournament.status.name() == 'INSCRIPTION'}" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+               th:href="@{/tournaments/{id}/generate(id=${tournament.id})}">Générer le calendrier</a>
+            <form th:if="${tournament.status.name() == 'PROGRAMME'}" sec:authorize="hasAnyRole('ADMIN','MANAGER','OPERATOR')"
+                  th:action="@{/tournaments/{id}/start(id=${tournament.id})}" method="post">
+                <button class="btn" type="submit">Démarrer le tournoi</button></form>
+            <form th:if="${tournament.status.name() == 'PROGRAMME'}" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                  th:action="@{/tournaments/{id}/reset-matches(id=${tournament.id})}" method="post"
+                  onsubmit="return confirm('Supprimer le calendrier ? Il pourra être régénéré.');">
+                <button class="btn secondary" type="submit">Supprimer le calendrier</button></form>
+            <a class="btn secondary" th:unless="${tournament.status.isFinal()}" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+               th:href="@{/tournaments/{id}/edit(id=${tournament.id})}">Modifier</a>
+            <a class="btn secondary" th:if="${tournament.type.isChampionship() and !tournament.status.isFinal()}" sec:authorize="hasRole('ADMIN')"
+               th:href="@{/tournaments/{id}/ranking-config(id=${tournament.id})}">Configurer le classement</a>
+            <form th:unless="${tournament.status.isFinal()}" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                  th:action="@{/tournaments/{id}/cancel(id=${tournament.id})}" method="post"
+                  onsubmit="return confirm('Annuler ce tournoi ?');">
+                <button class="btn danger" type="submit">Annuler le tournoi</button></form>
+            <form th:if="${tournament.status.name() == 'BROUILLON' or tournament.status.name() == 'INSCRIPTION' or tournament.status.name() == 'ANNULE'}"
+                  sec:authorize="hasRole('ADMIN')"
+                  th:action="@{/tournaments/{id}/delete(id=${tournament.id})}" method="post"
+                  onsubmit="return confirm('Supprimer définitivement ce tournoi ?');">
+                <button class="btn danger" type="submit">Supprimer</button></form>
+        </div>
+    </div>
+
+    <div class="card" th:if="${tournament.description}">
+        <p th:text="${tournament.description}">Description</p>
+    </div>
+
+    <h2 th:text="|Équipes inscrites (${tournament.registeredTeams} / ${tournament.maxTeams})|">Équipes inscrites</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>#</th><th>Équipe</th><th>Ville</th><th>Inscrite le</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="r, it : ${registrations}">
+                <td th:text="${it.count}">1</td>
+                <td><a th:href="@{/teams/{id}(id=${r.teamId})}" th:text="${r.teamName}">Équipe</a></td>
+                <td th:text="${r.city}">Ville</td>
+                <td th:text="${#temporals.format(r.registeredAt, 'dd/MM/yyyy HH:mm')}">date</td>
+                <td>
+                    <form th:if="${tournament.status.name() == 'INSCRIPTION' or tournament.status.name() == 'PROGRAMME'}"
+                          sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                          th:action="@{/tournaments/{id}/teams/{teamId}/withdraw(id=${tournament.id}, teamId=${r.teamId})}" method="post"
+                          onsubmit="return confirm('Retirer cette équipe du tournoi ?');">
+                        <button class="btn small danger" type="submit">Retirer</button></form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(registrations)}"><td colspan="5" class="muted">Aucune équipe inscrite.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <form class="card filters" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+          th:if="${availableTeams != null}" th:action="@{/tournaments/{id}/teams(id=${tournament.id})}" method="post">
+        <div class="field"><label for="teamId">Inscrire une équipe</label>
+            <select id="teamId" name="teamId" required>
+                <option value="">Choisir une équipe…</option>
+                <option th:each="t : ${availableTeams}" th:value="${t.id}" th:text="|${t.name} (${t.city})|">Équipe</option>
+            </select></div>
+        <button class="btn" type="submit">Inscrire</button>
+    </form>
+</main>
+</body>
+</html>

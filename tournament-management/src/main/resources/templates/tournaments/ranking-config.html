@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Configuration du classement')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: messages}"></div>
+    <h1>Configuration du classement</h1>
+    <p class="muted"><a th:href="@{/tournaments/{id}(id=${tournament.id})}" th:text="${tournament.name}">Tournoi</a> · réservé à l'administrateur</p>
+    <form class="card" th:action="@{/tournaments/{id}/ranking-config(id=${tournament.id})}" method="post">
+        <h2 style="margin-top:0">Critères de départage (dans l'ordre)</h2>
+        <div class="form-grid">
+            <div class="field" th:each="slot, it : ${slots}">
+                <label th:for="${'criterion' + it.index}" th:text="|Critère ${it.count}|">Critère</label>
+                <select name="criteria" th:id="${'criterion' + it.index}">
+                    <option value="">— aucun —</option>
+                    <option th:each="c : ${criteriaValues}" th:value="${c}" th:text="${c.label}"
+                            th:selected="${slot != null and slot == c}">Critère</option>
+                </select>
+            </div>
+        </div>
+        <p class="hint">Un critère ne peut être utilisé qu'une seule fois ; au moins un critère est obligatoire.</p>
+        <h2>Barème de points</h2>
+        <div class="form-grid">
+            <div class="field"><label for="pointsForWin">Victoire</label>
+                <input type="number" id="pointsForWin" name="pointsForWin" min="0" max="10" th:value="${tournament.pointsForWin}" required></div>
+            <div class="field"><label for="pointsForDraw">Match nul</label>
+                <input type="number" id="pointsForDraw" name="pointsForDraw" min="0" max="10" th:value="${tournament.pointsForDraw}" required></div>
+            <div class="field"><label for="pointsForLoss">Défaite</label>
+                <input type="number" id="pointsForLoss" name="pointsForLoss" min="0" max="10" th:value="${tournament.pointsForLoss}" required></div>
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn">Enregistrer</button>
+            <a class="btn secondary" th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}">Annuler</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

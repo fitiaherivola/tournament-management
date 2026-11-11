@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Résultat')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <h1>Saisie du résultat</h1>
+    <p class="muted"><a th:href="@{/tournaments/{id}(id=${match.tournamentId})}" th:text="${match.tournamentName}">Tournoi</a>
+        · <span th:text="${match.phase.label}">Phase</span>
+        <span th:if="${match.phase.name() == 'CHAMPIONNAT'}" th:text="|· journée ${match.round}|"></span></p>
+    <form class="card" th:action="@{/matches/{id}/result(id=${match.id})}" th:object="${form}" method="post">
+        <div class="alert error" th:if="${#fields.hasErrors('*')}">
+            <strong>Enregistrement impossible :</strong>
+            <ul><li th:each="err : ${#fields.errors('*')}" th:text="${err}">Erreur</li></ul>
+        </div>
+        <div class="alert success" th:if="${match.status.name() == 'TERMINE'}">
+            Un résultat existe déjà : l'enregistrer à nouveau le corrige et recalcule le classement
+            (et le tableau d'élimination).
+        </div>
+        <div class="form-grid">
+            <div class="field"><label for="homeScore" th:text="${match.homeTeam != null ? match.homeTeam.name + ' (domicile)' : 'Domicile'}">Domicile</label>
+                <input type="number" id="homeScore" th:field="*{homeScore}" min="0" max="99" required></div>
+            <div class="field"><label for="awayScore" th:text="${match.awayTeam != null ? match.awayTeam.name + ' (visiteur)' : 'Visiteur'}">Visiteur</label>
+                <input type="number" id="awayScore" th:field="*{awayScore}" min="0" max="99" required></div>
+        </div>
+        <div th:if="${match.phase.name() != 'CHAMPIONNAT'}">
+            <p class="hint">Élimination directe : en cas de match nul, renseignez les tirs au but pour désigner le vainqueur.</p>
+            <div class="form-grid">
+                <div class="field"><label for="homePenalties">Tirs au but – domicile</label>
+                    <input type="number" id="homePenalties" th:field="*{homePenalties}" min="0" max="99"></div>
+                <div class="field"><label for="awayPenalties">Tirs au but – visiteur</label>
+                    <input type="number" id="awayPenalties" th:field="*{awayPenalties}" min="0" max="99"></div>
+            </div>
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn">Enregistrer le résultat</button>
+            <a class="btn secondary" th:href="@{/tournaments/{id}/matches(id=${match.tournamentId})}">Annuler</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

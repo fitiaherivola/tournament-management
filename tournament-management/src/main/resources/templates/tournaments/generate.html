@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Générer le calendrier')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <h1>Générer le calendrier</h1>
+    <p class="muted"><a th:href="@{/tournaments/{id}(id=${tournament.id})}" th:text="${tournament.name}">Tournoi</a>
+        · <span th:text="${tournament.type.label}">Type</span>
+        · <span th:text="|${tournament.registeredTeams} équipe(s) inscrite(s)|">0</span></p>
+    <p class="card">Tous les matchs sont créés en une seule opération : en cas d'erreur (équipe déjà occupée au même
+        horaire, par exemple), rien n'est enregistré. Un calendrier ne peut être généré qu'une seule fois ; tant que le
+        tournoi n'a pas démarré, il peut être supprimé puis régénéré. Si le nombre d'équipes n'est pas une puissance de
+        deux (élimination directe), les premières équipes inscrites sont exemptées du premier tour.</p>
+    <form class="card" th:action="@{/tournaments/{id}/generate(id=${tournament.id})}" th:object="${form}" method="post">
+        <div class="alert error" th:if="${#fields.hasErrors('*')}">
+            <strong>Génération impossible :</strong>
+            <ul><li th:each="err : ${#fields.errors('*')}" th:text="${err}">Erreur</li></ul>
+        </div>
+        <div class="form-grid">
+            <div class="field"><label for="startDateTime">Premier match</label>
+                <input type="datetime-local" id="startDateTime" th:field="*{startDateTime}"></div>
+            <div class="field"><label for="slotMinutes">Durée d'un créneau (minutes)</label>
+                <input type="number" id="slotMinutes" th:field="*{slotMinutes}" min="30" max="600"></div>
+            <div class="field"><label for="roundIntervalDays">Jours entre deux tours</label>
+                <input type="number" id="roundIntervalDays" th:field="*{roundIntervalDays}" min="1" max="60"></div>
+            <div class="field"><label for="venues">Terrains</label>
+                <input type="text" id="venues" th:field="*{venues}" placeholder="Terrain A, Terrain B">
+                <span class="hint">Séparés par des virgules. Terrain par défaut si vide.</span></div>
+        </div>
+        <div class="checkline"><input type="checkbox" id="shuffle" th:field="*{shuffle}">
+            <label for="shuffle">Tirage au sort de l'ordre des équipes (sinon : ordre d'inscription)</label></div>
+        <div class="actions">
+            <button type="submit" class="btn">Générer les matchs</button>
+            <a class="btn secondary" th:href="@{/tournaments/{id}(id=${tournament.id})}">Annuler</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

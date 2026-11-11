@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Statistiques')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('tournaments')}"></header>
+<main class="container">
+    <div class="page-head">
+        <div>
+            <h1>Statistiques</h1>
+            <p class="muted"><a th:href="@{/tournaments/{id}(id=${tournament.id})}" th:text="${tournament.name}">Tournoi</a></p>
+        </div>
+    </div>
+
+    <div class="card" th:if="${stats.champion != null}">🏆 Champion : <strong th:text="${stats.champion.name}">Équipe</strong></div>
+
+    <div class="grid">
+        <div class="stat"><div class="n" th:text="${stats.teams}">0</div><div class="l">Équipes</div></div>
+        <div class="stat"><div class="n" th:text="|${stats.playedMatches} / ${stats.totalMatches}|">0</div><div class="l">Matchs joués</div></div>
+        <div class="stat"><div class="n" th:text="${stats.totalGoals}">0</div><div class="l">Buts marqués</div></div>
+        <div class="stat"><div class="n" th:text="${stats.averageGoalsPerMatch}">0</div><div class="l">Buts par match</div></div>
+        <div class="stat"><div class="n" th:text="${stats.draws}">0</div><div class="l">Matchs nuls</div></div>
+        <div class="stat"><div class="n" th:text="|${stats.homeWins} / ${stats.awayWins}|">0</div><div class="l">Victoires dom. / ext.</div></div>
+    </div>
+    <div class="card">
+        <div style="display:flex;justify-content:space-between"><strong>Avancement</strong>
+            <span th:text="|${stats.completionRate} % (${stats.remainingMatches} match(s) restant(s))|">0 %</span></div>
+        <div class="bar"><div th:style="|width:${stats.completionRate}%|"></div></div>
+    </div>
+
+    <div class="two-col">
+        <div class="card" th:if="${stats.bestAttack != null}">
+            <strong>Meilleure attaque</strong><br>
+            <span th:text="|${stats.bestAttack.teamName} : ${stats.bestAttack.goalsFor} but(s)|">Équipe</span>
+        </div>
+        <div class="card" th:if="${stats.bestDefense != null}">
+            <strong>Meilleure défense</strong><br>
+            <span th:text="|${stats.bestDefense.teamName} : ${stats.bestDefense.goalsAgainst} but(s) encaissé(s)|">Équipe</span>
+        </div>
+        <div class="card" th:if="${stats.highestScoringMatch != null}">
+            <strong>Match le plus prolifique</strong><br>
+            <span th:text="|${stats.highestScoringMatch.homeTeam.name} ${stats.highestScoringMatch.homeScore} - ${stats.highestScoringMatch.awayScore} ${stats.highestScoringMatch.awayTeam.name}|">Match</span>
+        </div>
+        <div class="card" th:if="${stats.biggestWin != null}">
+            <strong>Plus large victoire</strong><br>
+            <span th:text="|${stats.biggestWin.homeTeam.name} ${stats.biggestWin.homeScore} - ${stats.biggestWin.awayScore} ${stats.biggestWin.awayTeam.name}|">Match</span>
+        </div>
+    </div>
+
+    <h2>Par équipe</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Équipe</th><th class="num">J</th><th class="num">G</th><th class="num">N</th><th class="num">P</th><th class="num">BP</th><th class="num">BC</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${stats.teamStats}">
+                <td><a th:href="@{/teams/{id}(id=${t.teamId})}" th:text="${t.teamName}">Équipe</a></td>
+                <td class="num" th:text="${t.played}">0</td><td class="num" th:text="${t.wins}">0</td>
+                <td class="num" th:text="${t.draws}">0</td><td class="num" th:text="${t.losses}">0</td>
+                <td class="num" th:text="${t.goalsFor}">0</td><td class="num" th:text="${t.goalsAgainst}">0</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(stats.teamStats)}"><td colspan="7" class="muted">Aucune donnée.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>
